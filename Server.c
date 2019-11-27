@@ -5,99 +5,219 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include"lib.h"
-#include<errno.h>
-int main()
-{
-  int server_sockfd, client_sockfd;
-  int server_len, client_len;
-  struct sockaddr_in server_address;
-  struct sockaddr_in client_address;
-  int result;
-  int ret;
-  fd_set readfds, testfds;
-  server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  server_address.sin_family = AF_INET;
-  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_address.sin_port = htons(1500);
-  server_len = sizeof(server_address);
-  bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
-  listen(server_sockfd, 5);
-  FD_ZERO(&readfds);
-  FD_SET(server_sockfd, &readfds);
-  socklen_t addr_size;
-  while (1){
-       int newSocket = accept(server_sockfd, (struct sockaddr*)&client_address, &addr_size);
-      while(1)
-      {
+#include "lib.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <search.h>
+#include <errno.h>
+#include "lib.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+#define MAX_CLIENT 100
 
-           Data data;
-        memset((void *)&data, 0, sizeof(Data));
-        ret = recv(newSocket, &data, sizeof(data), 0);
-         printf("rcv:%s :%s:%s",data.cmd,data.user,data.string);
-         memset((void *)&data, 0, sizeof(Data));
-        scanf("%s", data.cmd);
-        scanf("%s", data.user);
-        scanf("%s", data.string);
-        ret = send(newSocket, &data, sizeof(data), 0);
-        if (-1 == ret)
+char flag[MAX_CLIENT];
+FILE* log;
+
+int len_account;
+int count;
+Data data;
+int ret;
+Account *account;
+struct Node_UserSocket *add_usersocket(int socket, Account account)
+{
+  struct Node_UserSocket *new = malloc(sizeof(struct Node_UserSocket));
+  if (new == NULL)
+  {
+    print("memory full!\n");
+    return NULL;
+  }
+  new->next = NULL;
+  new->pre = NULL;
+  if (count == 0)
+    head = tail = new;
+  tail->next = new;
+  new->pre = tail;
+  tail = new;
+  count++;
+  return new;
+}
+int remove_usersocket(struct Node_UserSocket *user)
+{
+  if (count == 0)
+    return -1;
+  struct Node_UserSocket *pre = user->pre;
+  struct Node_UserSocket *next = user->next;
+  pre->next = next;
+  next->pre = pre;
+  count--;
+  if (user == tail)
+    tail = pre;
+  if (user == head)
+    head = next;
+  free(user);
+  user = NULL;
+  return 0;
+}
+void convert_line(char*user, char*data,const char* line){
+  sscanf(line,"%10s",user);
+  strcpy(data,line+11);
+}
+int compare_account(const Account *account1, const Account *account2)
+{
+  return strcmp(account1->username, account2->username) + strcmp(account1->pass, account2->pass);
+}
+int find_account(const Account acc)
+{
+
+  Account *ret = lfind((void *)&acc, account, sizeof(Account), &len_account, compare_account);
+  if (ret == NULL)
+    return -1;
+  return (ret - account) / sizeof(Account);
+}
+
+void *thread_send_rcv(void *arg)
+{
+  int i = 0;
+  int socket = (int)arg;
+  int ret;
+  Data data;
+  Account tmp;
+  do
+  {
+    memset((void *)&data, 0, sizeof(Data));
+    strcpy(data.cmd, USER_ENTER);
+    ret = send(socket, &data, sizeof(data), 0);
+    if (-1 == ret)
+    {
+      printf("%s: %d\n", ERROR_SEND, errno);
+      close(socket);
+      return;
+    }
+    memset((void *)&data, 0, sizeof(Data));
+    ret = recv(socket, &data, sizeof(data), 0);
+    if (-1 == ret)
     {
       printf("%s: %d\n", ERROR_RECV, errno);
-          close(newSocket);
-          break;
-     
+      close(socket);
+      return;
     }
-    else{
-          printf("send to %s:%d\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
+    strcpy(tmp.username, data.user);
+    strcpy(tmp.pass, data.cmd);
+    ret = find_account(tmp);
+    memset((void *)&data, 0, sizeof(Data));
+    if (ret > -1)
+    {
+      break;
     }
-      }
+    i++;
 
+  } while (i < 3);
+  if (i == 3)
+  {
+    memset((void *)&data, 0, sizeof(Data));
+    strcpy(data.cmd, CLOSE);
+    ret = send(socket, &data, sizeof(data), 0);
+    if (-1 == ret)
+    {
+      printf("%s: %d\n", ERROR_SEND, errno);
+      close(socket);
+      return;
+    }
+    close(socket);
+    return;
+  }
+  struct Node_UserSocket *new = add_usersocket(socket, tmp);
+  memset((void *)&data, 0, sizeof(Data));
+  ret = recv(socket, &data, sizeof(data), 0);
+  if (-1 == ret)
+  {
+    printf("%s: %d\n", ERROR_RECV, errno);
+    remove_usersocket(new);
+    close(socket);
+    return;
+  }
+  char *line=NULL;
+  int n;
+  while (getline(&line,&n,log)!=-1)
+  {
+    memset((void *)&data, 0, sizeof(Data));
+    strcpy(data.cmd,LOG);
+    convert_line(data.user,data.string,line);
 
   }
-//   {
-//     char ch;
-//     int fd;
-//     int nread;
-//     testfds = readfds;
-//     printf("server waiting\n");
-//     result = select(FD_SETSIZE, &testfds, (fd_set *)0,
-//                     (fd_set *)0, (struct timeval *)0);
-//     if (result < 1)
-//     {
-//       perror("server5");
-//       exit(1);
-//     }
-//     for (fd = 0; fd < FD_SETSIZE; fd++)
-//     {
-//       if (FD_ISSET(fd, &testfds))
-//       {
-//         if (fd == server_sockfd)
-//         {
-//           client_len = sizeof(client_address);
-//           client_sockfd = accept(server_sockfd,
-//                                  (struct sockaddr *)&client_address, &client_len);
-//           FD_SET(client_sockfd, &readfds);
-//           printf("adding client on fd %d\n", client_sockfd);
-//         }
-//         else
-//         {
-//           ioctl(fd, FIONREAD, &nread);
-//           if (nread == 0)
-//           {
-//             close(fd);
-//             FD_CLR(fd, &readfds);
-//             printf("removing client on fd %d\n", fd);
-//           }
-//           else
-//           {
-//             read(fd, &ch, 1);
-//             sleep(5);
-//             printf("serving client on fd %d\n", fd);
-//             ch++;
-//             write(fd, &ch, 1);
-//           }
-//         }
-//       }
-//     }
-//   }
+  
+  memset((void *)&data, 0, sizeof(Data));
+  fscanf(log,"%s:%s",data.user,data.string);
+  while(0==0)
+  {
+    ret = send(socket, &data, sizeof(data), 0);
+    if (-1 == ret)
+    {
+      printf("%s: %d\n", ERROR_SEND, errno);
+      close(socket);
+      return;
+    } 
+  }
+}
+#define PORT 1500
+#define SERVER "10.72.0.10"
+int status_compare(int key, UserSocket *in)
+{
+  return (key == in->status) ? 0 : 1;
+}
+
+int name_compare(char *key, UserSocket *in)
+{
+  return (strcmp(key, in->user) && (in->status != 2)) ? 0 : 1;
+}
+
+int main()
+{
+  int server, ret;
+  struct sockaddr_in server_addr;
+  int client;
+  struct sockaddr_in client_addr;
+  socklen_t addr_size;
+  server = socket(AF_INET, SOCK_STREAM, 0);
+  if (server < 0)
+  {
+    printf("[-]Error in connection.\n");
+    exit(1);
+  }
+  printf("[+]Server Socket is created.\n");
+
+  memset(&server_addr, '\0', sizeof(server_addr));
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(PORT);
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+
+  ret = bind(server, (struct sockaddr *)&server_addr, sizeof(server_addr));
+  if (ret < 0)
+  {
+    printf("[-]Error in binding.\n");
+    exit(1);
+  }
+  printf("[+]Bind to port %d\n", PORT);
+
+  if (0 == listen(server, 10))
+  {
+    printf("[+]Listening....\n");
+  }
+  else
+  {
+    printf("[-]Error in binding.\n");
+  }
+
+  memset(user, 0, sizeof(user));
+  memset(flag, 0, sizeof(flag));
+  while (1)
+  {
+    if (MAX_CLIENT == count)
+    {
+      printf("Server full!\n");
+      break;
+    }
+    client = accept(server, (struct sockaddr *)&client_addr, &addr_size);
+  }
 }

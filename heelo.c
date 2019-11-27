@@ -1,40 +1,41 @@
-/*zombie.c*/
-#include <sys/wait.h>
-#include <unistd.h>
+/* fscanf example */
 #include <stdio.h>
+#include "lib.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+void convert_line(char*user, char*data,const char* line){
+  sscanf(line,"%10s",user);
+  strcpy(data,line+11);
+}
+int main ()
+{
+  char user[10];
+  char data[1024];
+  char *line=NULL;
+  float f;
+  int a;
+  FILE * pFile;
 
-
-int main(int argc, char *argv[])
-{    
- pid_t pid;
- char *message;
- int n;
- int i;
-/*create new process*/
- pid = fork();
- if(pid<0){
-   printf("Error!\n");
-   exit(-1);
- }
-
-
- /*parent process*/
- if(pid)
- {
-    n=2;
-    message="parent\n";
- }
- /*child process*/
- if(!pid)
- {
-    n=1;
-    message="child\n";
- }
+  pFile = fopen ("luong.txt","w+");
+  
+  while (getline(&line,&a,pFile)!=-1)
+  {   printf("luong\n");
+      
+       printf("%s",line);
+       memset(user,0,10);
+       memset(data,0,1024);
+      convert_line(user,data,line);
+      printf("%s:%s",user,data);
+  }
+  fseek(pFile, 200, SEEK_END);
+  for(int i=0;i<10;i++)
+  {
+      fprintf(pFile,"%d : luong: pham\n",i);
+  }
  
- for(i=0;i<n;i++){
-   printf("%s",message);
-   sleep(3);
- }
- exit(0);
- }
-
+  
+  
+  fclose (pFile);
+  
+  return 0;
+}

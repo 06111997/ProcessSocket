@@ -2,9 +2,15 @@
 #define USER_ENTER "UENTER"
 #define USER_OK "UOK"
 #define USER_ERROR "UERROR"
+#define CLOSE "CLOSE"
 #define MESS_CLIENT_TO_SERVER "MESS"
 #define ERROR_SEND "ERROR SEND"
 #define ERROR_RECV "ERROR RECEIVE"
+#define LOG "LOG"
+typedef struct Account{
+  char username[10];
+  char pass[10];
+}Account; 
 
 typedef struct Data
 {
@@ -14,8 +20,17 @@ typedef struct Data
 } Data;
 typedef struct UserSocket
 {
-    char user[10];
     int socket;
-    struct sockaddr addr;
+    Account account;
 
 } UserSocket;
+
+struct Node_UserSocket
+{
+  UserSocket user;
+  struct No_UserSocket * pre;
+  struct No_UserSocket * next;
+};
+
+struct Node_UserSocket  *head=NULL;
+struct Node_UserSocket  *tail=NULL;

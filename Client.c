@@ -28,7 +28,7 @@ int main()
   if (client < 0)
   {
     printf("[-]Error in connection.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   printf("[+]Client Socket %d is created.\n", client);
 
@@ -41,7 +41,7 @@ int main()
   if (ret < 0)
   {
     printf("[-]Error in connection.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   printf("[+]Connected to Server.\n");
   while (0 == 0)
@@ -79,7 +79,7 @@ int main()
   case -1:
   {
     printf("Can't create process");
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
   case 0:
   { 
@@ -98,7 +98,7 @@ int main()
       {
         printf("%s: %d\n", ERROR_SEND, errno);
             close(client);
-            exit(-1);
+            exit(EXIT_FAILURE);
       }
     }
   }
@@ -110,7 +110,7 @@ int main()
     case -1:
     {
       printf("Can't create process");
-      exit(-1);
+      exit(EXIT_FAILURE);
     }
     case 0:
     {
@@ -123,7 +123,7 @@ int main()
         {
           printf("%s: %d\n", ERROR_RECV, errno);
               close(client);
-              exit(-1);
+              exit(EXIT_FAILURE);
         }
         printf("%s : %s\n", data.user, data.string);
       }
@@ -134,7 +134,7 @@ int main()
       pid_t pid1= wait(&status);
       pid_t pid2=(pid1==send_pid)?rcv_pid:send_pid;
       kill(pid2, SIGTERM);
-      
+      close(client);
     }
     }
   }
