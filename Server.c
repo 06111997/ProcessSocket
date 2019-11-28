@@ -35,7 +35,7 @@ struct Node_UserSocket *add_usersocket(int socket, Account account)
   new->next = NULL;
   new->pre = NULL;
   if (count == 0)
-    head = tail = new;
+    head = new;
   tail->next = new;
   new->pre = tail;
   tail = new;
@@ -75,7 +75,7 @@ int find_account(const Account acc)
     return -1;
   return (ret - account) / sizeof(Account);
 }
-
+void send_all(Dâ){}
 void *thread_send_rcv(void *arg)
 {
   int i = 0;
@@ -137,8 +137,10 @@ void *thread_send_rcv(void *arg)
     close(socket);
     return;
   }
+  /*
   char *line=NULL;
   int n;
+  fseek(log,0, SEEK_END);
   while (getline(&line,&n,log)!=-1)
   {
     memset((void *)&data, 0, sizeof(Data));
@@ -146,10 +148,21 @@ void *thread_send_rcv(void *arg)
     convert_line(data.user,data.string,line);
 
   }
-  
-  memset((void *)&data, 0, sizeof(Data));
-  fscanf(log,"%s:%s",data.user,data.string);
+  */
+
   while(0==0)
+  {
+  memset((void *)&data, 0, sizeof(Data));
+  ret = recv(socket, &data, sizeof(data), 0);
+  if (-1 == ret)
+  {
+    printf("%s: %d\n", ERROR_RECV, errno);
+    remove_usersocket(new);
+    close(socket);
+    remove_usersocket(new);
+    return 0;
+  }
+  for(int i=0;i<count;i++)
   {
     ret = send(socket, &data, sizeof(data), 0);
     if (-1 == ret)
@@ -157,20 +170,11 @@ void *thread_send_rcv(void *arg)
       printf("%s: %d\n", ERROR_SEND, errno);
       close(socket);
       return;
-    } 
+    }
+  } 
   }
 }
-#define PORT 1500
-#define SERVER "10.72.0.10"
-int status_compare(int key, UserSocket *in)
-{
-  return (key == in->status) ? 0 : 1;
-}
 
-int name_compare(char *key, UserSocket *in)
-{
-  return (strcmp(key, in->user) && (in->status != 2)) ? 0 : 1;
-}
 
 int main()
 {
