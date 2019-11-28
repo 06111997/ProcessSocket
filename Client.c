@@ -9,7 +9,7 @@
 #include "lib.h"
 #include <errno.h>
 #include<signal.h>
-#include<ncurses.h>
+
 
 #define PORT 1500
 #define SERVER "10.72.0.10"
@@ -27,10 +27,10 @@ int main()
   client = socket(AF_INET, SOCK_STREAM, 0);
   if (client < 0)
   {
-    printf("[-]Error in connection.\n");
+    printf("Error in connection.\n");
     exit(EXIT_FAILURE);
   }
-  printf("[+]Client Socket %d is created.\n", client);
+  printf("Client Socket %d is created.\n", client);
 
   server.sin_family = AF_INET;
   server.sin_port = htons(PORT);
@@ -40,17 +40,18 @@ int main()
 
   if (ret < 0)
   {
-    printf("[-]Error in connection.\n");
+    printf("Error in connection.\n");
     exit(EXIT_FAILURE);
   }
-  printf("[+]Connected to Server.\n");
+  printf("Connected to Server.\n");
   while (0 == 0)
   {
     memset((void *)&data, 0, sizeof(Data));
     strcpy(data.cmd, USER_ENTER);
-	printf("Enter user:");
-    scanf("%s", data.user);
-    
+	printf("Enter user :");
+    gets( data.user);
+    printf("Enter password :");
+     gets(data.string);
 
     ret = send(client, &data, sizeof(data), 0);
     if (-1 == ret)
@@ -83,7 +84,7 @@ int main()
   }
   case 0:
   { 
-	  attroff(A_BOLD);
+
     while (0 == 0)
     {
       memset((void *)&data, 0, sizeof(Data));
@@ -91,7 +92,7 @@ int main()
       strcpy(data.user, me);
 	  printf("\033[%d;%dHSend:", 50, 1);
      
-      scanf("%s", data.string);
+      gets(data.string);
       ret = send(client, &data, sizeof(data), 0);
 	   printf("%s : %s\n", data.user, data.string);
       if (-1 == ret)
