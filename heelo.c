@@ -1,29 +1,49 @@
-/* fscanf example */
-#include <stdio.h>
-#include "lib.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-char user[20];
-char pass[20];
-FILE *file_account;
-int open_account()
+#include <unistd.h>
+#include <stdlib.h>
+#include <curses.h>
+int main()
 {
-int i=0;
-  do{
-    memset(user, 0, 20);
-    memset(pass, 0, 20);
-    gets(user);
-    gets(pass);
-   fprintf(file_account, "%-19s %-19s\n", user,pass);
-    i++;
-  }while(i<20);
-  return i;
-}
-int main ()
-{
-  file_account = fopen("./account", "r+");
 
-  open_account();
-  fclose(file_account);
-  return 0;
+  int x_loop;
+  int y_loop;
+  char a_letter = 'a';
+  initscr();
+  move(5, 5);
+  printw("%s", "Testing multiple windows");
+  refresh();
+
+  sleep(2);
+  new_window_ptr = newwin( LINES-5, COLS-1,0, 0);
+  box(new_window_ptr, '|', '-');
+
+    scrollok(new_window_ptr,TRUE);
+
+
+  wrefresh(new_window_ptr);
+  sleep(2);
+ 
+
+  sleep(2);
+  wrefresh(new_window_ptr);
+  sleep(2);
+  touchwin(new_window_ptr);
+  wrefresh(new_window_ptr);
+  sleep(2);
+  popup_window_ptr = newwin(4, COLS-1,LINES-4, 0);
+  box(popup_window_ptr, '|', '-');
+  
+  wrefresh(popup_window_ptr);
+  sleep(2);
+  touchwin(new_window_ptr);
+  wrefresh(new_window_ptr);
+  sleep(2);
+// wclear(new_window_ptr);
+  wrefresh(new_window_ptr);
+  char s[100];
+  while(wgetstr(new_window_ptr,  s)!=-1){
+  wgetstr(new_window_ptr,  s);
+  wprintw(new_window_ptr,"\n%s\n" , s);
+  }
+  endwin();
+  exit(EXIT_SUCCESS);
 }

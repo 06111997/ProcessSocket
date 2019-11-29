@@ -29,9 +29,7 @@ typedef struct UserSocket
 struct Node_UserSocket
 {
     UserSocket user;
-    struct No_UserSocket *pre;
-    struct No_UserSocket *next;
+    struct Node_UserSocket *pre;
+    struct Node_UserSocket *next;
 };
 
-struct Node_UserSocket *head = NULL;
-struct Node_UserSocket *tail = NULL;
