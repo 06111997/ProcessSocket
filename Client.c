@@ -9,8 +9,8 @@
 #include "lib.h"
 #include <errno.h>
 #include <signal.h>
-#include<ncurses.h>
-#define PORT 1500
+
+#define PORT 3000
 #define SERVER "127.0.0.1"
 
 int main()
@@ -22,7 +22,7 @@ int main()
   char cmd[10];
   Data data;
   pid_t send_pid, rcv_pid;
-  char me[10];
+  char me[20];
   
 
   client = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,7 +49,7 @@ int main()
   {
     printf("luong\n");
     memset((void *)&data, 0, sizeof(Data));
-    ret = recv(client, &data, sizeof(data), 0);printf("line %d\n",__LINE__);
+    ret = recv(client, &data, sizeof(data), 0);
     if (-1 == ret)
     {
       printf("%s: %d\n", ERROR_SEND, errno);
@@ -104,15 +104,15 @@ int main()
  
   }
 
-  system("clear");printf("line %d\n",__LINE__);
+  system("clear");
   memset(me, 0, sizeof(me));
   strcpy(me, data.user);
-  send_pid = fork();printf("line %d\n",__LINE__);
+  send_pid = fork();
   switch (send_pid)
   {
   case -1:
   {
-    printf("Can't create process");printf("line %d\n",__LINE__);
+    printf("Can't create process");
     exit(EXIT_FAILURE);
   }
   case 0:
@@ -123,7 +123,7 @@ int main()
       memset((void *)&data, 0, sizeof(Data));
       strcpy(data.cmd, MESS_CLIENT_TO_SERVER);
       strcpy(data.user, me);
-      printf("Send:");printf("line %d\n",__LINE__);
+      printf("Send:");
 
       gets(data.string);
       ret = send(client, &data, sizeof(data), 0);

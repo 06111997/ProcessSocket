@@ -16,7 +16,7 @@
 
 #define MAX_CLIENT 100
 #define MAX_ACCOUNT 100
-#define PORT 1500
+#define PORT 3000
 #define ACCOUNT_FILE "./account"
 
 int len_account;
@@ -62,58 +62,58 @@ struct Node_UserSocket *add_usersocket(int socket, Account account)
         printf("Memory full!\n");
         return NULL;
     }
-    printf("line %d\n", __LINE__);
+    memset(new,0,sizeof(struct Node_UserSocket));
+    strcpy(new->user.account.pass,account.pass);
+    strcpy(new->user.account.username,account.username);
+    new->user.socket=socket;
+  
     count++;
     new->next = NULL;
 
     new->pre = NULL;
-    printf("line %d\n", __LINE__);
+  
     if (count == 1)
     {
         head = new;
-        printf("%d:%s\n", head->user.socket, head->user.account.username);
-
         tail = new;
-        printf("line %d\n", __LINE__);
         return new;
     }
     tail->next = new;
-    printf("line %d\n", __LINE__);
+  
     new->pre = tail;
-    printf("line %d\n", __LINE__);
+  
     tail = new;
-    printf("line %d\n", __LINE__);
+  
     return new;
 }
 int remove_usersocket(struct Node_UserSocket *user)
 {
-    struct Node_UserSocket *pre = user->pre;
-    struct Node_UserSocket *next = user->next;
-    printf("remove SocketUser.%d\n", count);
-    if (count == 0)
+
+    if (count == 0||user==NULL)
     {
-        printf("line %d\n", __LINE__);
+      
         return -1;
     }
-    if (!pre||!next )
+    
+    if (!(user->pre)||!(user->next) )
     { 
-        if (NULL ==next)
+        if (NULL ==user->next)
         {
             tail = user->pre;
-            tail->next = NULL;
+            
         }
-        if(NULL==pre)
+        if(NULL==user->pre)
         {
-        head = user->next;
-        head->pre = NULL;
+        head=user->next;
         }
     }
     else
     {
+            struct Node_UserSocket *pre = user->pre;
+            struct Node_UserSocket *next = user->next;
+            printf("remove SocketUser.%d\n", count);
             pre->next = next;
-            printf("line %d\n", __LINE__);
             next->pre = pre;
-            printf("line %d\n", __LINE__);
  
     }
 
@@ -138,15 +138,14 @@ int find_account(Account acc)
 {
     printf("%s:%s:%d", acc.username, acc.pass, __LINE__);
     size_t num = 20;
-    printf("line %d\n", __LINE__);
+  
     Account *ret = lfind((const void *)&acc, (const void *)account_list, &num, sizeof(Account), compare_account);
     printf("%s:%s\n", acc.username, acc.pass);
     if (ret == NULL)
     {
-        printf("khong\n");
         return -1;
     }
-    printf("line %d\n", __LINE__);
+  
     return 0;
 }
 int send_all(struct Node_UserSocket *current, Data data)
@@ -157,11 +156,11 @@ int send_all(struct Node_UserSocket *current, Data data)
     while (NULL != tmp)
     {
         ret = send(tmp->user.socket, &data, sizeof(data), 0);
-        if (tmp->user.socket == current->user.socket)
+        if ((tmp->user.socket == current->user.socket)&&((ret==-1)||(ret==0)))
         {
             return -1;
         }
-        /* code */
+        tmp=tmp->next;
     }
     return 0;
 }
@@ -194,9 +193,9 @@ static void *thread_send_rcv(void *arg)
         strcpy(tmp.username, (const char *)data.user);
         strcpy(tmp.pass, (const char *)data.string);
         printf("%s:%s", tmp.pass, tmp.username);
-        printf("line %d\n", __LINE__);
+      
         ret = find_account(tmp);
-        printf("line %d\n", __LINE__);
+      
         memset((void *)&data, 0, sizeof(Data));
         if (ret > -1)
         {
@@ -204,7 +203,7 @@ static void *thread_send_rcv(void *arg)
             break;
         }
         count_enter++;
-        printf("line %d\n", __LINE__);
+      
 
     } while (count_enter < 3);
     printf("send broadcast\n");
@@ -224,6 +223,7 @@ static void *thread_send_rcv(void *arg)
         return NULL;
     }
     memset((void *)&data, 0, sizeof(Data));
+    strcpy(data.user, tmp.username);
     strcpy(data.cmd, USER_OK);
     ret = send(socket, &data, sizeof(data), 0);
     if (-1 == ret)
@@ -234,16 +234,6 @@ static void *thread_send_rcv(void *arg)
     }
     printf("begin create a node new!\n");
     struct Node_UserSocket *new = add_usersocket(socket, tmp);
-
-    memset((void *)&data, 0, sizeof(Data));
-    ret = recv(socket, &data, sizeof(data), 0);
-    if (-1 == ret)
-    {
-        printf("%s: %d\n", ERROR_RECV, errno);
-        remove_usersocket(new);
-        close(socket);
-        return NULL;
-    }
     printf("a node new!\n");
     while (0 == 0)
     {
@@ -256,9 +246,7 @@ static void *thread_send_rcv(void *arg)
             close(socket);
             return NULL;
         }
-        printf("send all\n");
         ret = send_all(new, data);
-        printf("end send all\n");
         if (-1 == ret)
         {
             printf("%s: %d\n", ERROR_SEND, errno);
@@ -306,7 +294,6 @@ int main()
         printf("wait!\n");
     }
     ret = open_account();
-    printf("line:%d", ret);
     if (0 == ret)
     {
         printf("Server don't ready.\n");
@@ -316,11 +303,7 @@ int main()
     {
         exit(EXIT_FAILURE);
     }
-    Account x;
-    strcpy(x.username, "luongt12343455");
-    strcpy(x.pass, "12345");
-    int a = find_account(x);
-    printf("line %d\n", __LINE__);
+    
 
     while (0 == 0)
     {

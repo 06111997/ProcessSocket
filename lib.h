@@ -7,6 +7,7 @@
 #define ERROR_SEND "ERROR SEND"
 #define ERROR_RECV "ERROR RECEIVE"
 #define LOG "LOG"
+
 typedef struct Account
 {
     char username[20];
@@ -16,9 +17,10 @@ typedef struct Account
 typedef struct Data
 {
     char cmd[10];
-    char user[10];
+    char user[20];
     char string[1024];
 } Data;
+
 typedef struct UserSocket
 {
     int socket;
