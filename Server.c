@@ -20,7 +20,7 @@
 #define MAX_CLIENT 100
 #define MAX_ACCOUNT 100
 #define PORT 3000
-#define ACCOUNT_FILE "./account"
+#define ACCOUNT_FILE "./accoun.txtt"
 
 int len_account;
 int count = 0;
